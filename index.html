@@ -1005,7 +1005,9 @@
             btnViewResults: document.getElementById('btn-view-results')
         };
 
-        function applyTheme(dark) {
+        const THEME_STORAGE_KEY = 'quoteguess_theme_preference';
+
+        function applyTheme(dark, save = true) {
             isDarkMode = dark;
             if (dark) {
                 document.documentElement.classList.add('dark');
@@ -1014,13 +1016,40 @@
                 document.documentElement.classList.remove('dark');
                 ui.themeIcon.className = "ph ph-moon text-xl text-slate-600";
             }
+
+            if (save) {
+                try {
+                    localStorage.setItem(THEME_STORAGE_KEY, dark ? 'dark' : 'light');
+                } catch (e) {
+                    console.warn("Could not save theme preference", e);
+                }
+            }
+        }
+
+        function initTheme() {
+            let savedTheme = null;
+            try {
+                savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+            } catch (e) {
+                console.warn("Could not retrieve theme preference", e);
+            }
+
+            if (savedTheme === 'dark') {
+                applyTheme(true, false);
+            } else if (savedTheme === 'light') {
+                applyTheme(false, false);
+            } else {
+                // If the user hasn't explicitly set a preference, check system default
+                const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                applyTheme(prefersDark, false);
+            }
         }
 
         ui.themeBtn.addEventListener('click', () => {
-            applyTheme(!isDarkMode);
+            applyTheme(!isDarkMode, true);
         });
 
-        applyTheme(false);
+        initTheme();
 
         function mulberry32(a) {
             return function() {
